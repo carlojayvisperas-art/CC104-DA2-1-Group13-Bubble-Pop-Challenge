@@ -8,6 +8,7 @@ let spawnTimer;
 let growthTimer;
 
 let maxSize = 80;
+let growthAmount = 2;
 
 // Creates a new bubble
 function createBubble() {
@@ -16,8 +17,8 @@ function createBubble() {
     let areaWidth = $("#game-area").width();
     let areaHeight = $("#game-area").height();
 
-    let x = Math.random() * Math.max(0, areaWidth - size);
-    let y = Math.random() * Math.max(0, areaHeight - size);
+    let x = Math.random() * Math.max(0, areaWidth - maxSize);
+    let y = Math.random() * Math.max(0, areaHeight - maxSize);
 
     let bubble = {
         id: bubbleId,
@@ -32,39 +33,60 @@ function createBubble() {
     displayBubbles();
 }
 
-// Displays all bubbles
+// Displays and updates bubbles without recreating them
 function displayBubbles() {
-    $("#game-area").empty();
+    let $area = $("#game-area");
 
+    // Remove bubbles that no longer exist in the array
+    $area.children(".bubble").each(function() {
+        let id = Number(this.id.replace("bubble-", ""));
+
+        let exists = bubbles.some(function(bubble) {
+            return bubble.id === id;
+        });
+
+        if (!exists) {
+            $(this).remove();
+        }
+    });
+
+    // Update existing bubbles or create new ones
     for (let i = 0; i < bubbles.length; i++) {
         let bubble = bubbles[i];
+        let $bubble = $("#bubble-" + bubble.id);
 
-        $("#game-area").append(`
-            <div class="bubble" id="bubble-${bubble.id}"
-                style="
-                    width: ${bubble.size}px;
-                    height: ${bubble.size}px;
-                    left: ${bubble.x}px;
-                    top: ${bubble.y}px;
-                ">
-            </div>
-        `);
+        if ($bubble.length === 0) {
+            $bubble = $('<div class="bubble" id="bubble-' + bubble.id + '"></div>');
+            $area.append($bubble);
+        }
+
+        $bubble.css({
+            width: bubble.size + "px",
+            height: bubble.size + "px",
+            left: bubble.x + "px",
+            top: bubble.y + "px"
+        });
     }
 }
 
 // Makes bubbles grow
 function growBubbles() {
-    for (let i = 0; i < bubbles.length; i++) {
-        bubbles[i].size += 2;
+    if (!gameStarted) {
+        return;
     }
 
-    // Removes bubbles that exceed the maximum size
+    for (let i = 0; i < bubbles.length; i++) {
+        bubbles[i].size += growthAmount;
+    }
+
+    // Finds bubbles that reach maximum size
     let burstBubbles = bubbles.filter(function(bubble) {
-        return bubble.size > maxSize;
+        return bubble.size >= maxSize;
     });
 
+    // Removes oversized bubbles
     bubbles = bubbles.filter(function(bubble) {
-        return bubble.size <= maxSize;
+        return bubble.size < maxSize;
     });
 
     // Deducts one life for every burst bubble
@@ -109,15 +131,13 @@ $("#start-btn").click(function() {
 
     createBubble();
 
-    // Creates new bubbles every 1.5 seconds
     spawnTimer = setInterval(function() {
         createBubble();
     }, 1500);
 
-    // Grows bubbles every 0.5 seconds
     growthTimer = setInterval(function() {
         growBubbles();
-    }, 500);
+    }, 100);
 });
 
 // Handles bubble clicking
@@ -128,7 +148,6 @@ $("#game-area").on("click", ".bubble", function() {
 
     let clickedId = Number(this.id.replace("bubble-", ""));
 
-    // Searches for the clicked bubble
     let selectedBubble = bubbles.find(function(bubble) {
         return bubble.id === clickedId;
     });
@@ -137,7 +156,6 @@ $("#game-area").on("click", ".bubble", function() {
         return;
     }
 
-    // Removes the clicked bubble
     bubbles = bubbles.filter(function(bubble) {
         return bubble.id !== clickedId;
     });
