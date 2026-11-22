@@ -49,5 +49,5 @@ Pop the Bubble is a simple browser-based game where players click growing bubble
 ## Group Members
 - Visperas, Carlo Jay D.
 - Pangilinan, Charlie M.
-- Vierbes, Francis Jay P.
+- Viernes, Francis Jay P.
 - Panganiban, Alvin John D.
